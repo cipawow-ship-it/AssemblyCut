@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>AssemblyCut</name>
+  <description>
+    Cut multiple PartDesign::Body objects in an assembly with a single sketch.
+    Opens a Pocket dialog for each body with auto-detection of which bodies
+    are intersected by the sketch. Supports reordering, depth preset per body,
+    and full FreeCAD Pocket parameters (taper, direction, through-all, etc.).
+  </description>
+  <version>1.0.0</version>
+  <date>2026-07-18</date>
+  <author email="cipa78@live.it">Cipa</author>
+  <maintainer email="cipa78@live.it">Cipa</maintainer>
+  <license file="LICENSE">LGPL-2.1-or-later</license>
+  <url type="repository">https://github.com/cipa78/AssemblyCut</url>
+  <url type="documentation">https://github.com/cipa78/AssemblyCut/blob/main/README.md</url>
+  <url type="bugtracker">https://github.com/cipa78/AssemblyCut/issues</url>
+  <contents>
+    <workbench>
+      <classname>AssemblyCutWorkbench</classname>
+      <description>
+        Toolbar in PartDesign workbench to cut multiple bodies with one sketch.
+      </description>
+    </workbench>
+  </contents>
+  <depends>
+    <freeCADEngine version="1.1.0"/>
+  </depends>
+</package>
