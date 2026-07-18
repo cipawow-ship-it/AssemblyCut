@@ -187,18 +187,14 @@ def _find_intersecting_bodies(doc, sketch, bodies):
     return result
 
 
-def _copy_sketch_into_body(doc, src_sketch, target_body):
-    new_sketch = target_body.newObject("Sketcher::SketchObject", src_sketch.Label + "_Copy")
-
-    geo_list = []
-    for geo in src_sketch.Geometry:
-        copied = geo.copy()
-        geo_list.append(copied)
-
-    new_sketch.addGeometry(geo_list, False)
-    new_sketch.Placement = src_sketch.Placement.copy()
+def _link_sketch_into_body(doc, src_sketch, target_body):
+    link_name = src_sketch.Label + "_Link"
+    link_obj = doc.addObject("Part::Link", link_name)
+    link_obj.LinkedObject = src_sketch
+    link_obj.Placement = src_sketch.Placement.copy()
+    target_body.addObject(link_obj)
     doc.recompute()
-    return new_sketch
+    return link_obj
 
 
 class _CutProcessor(QtCore.QObject):
@@ -220,13 +216,13 @@ class _CutProcessor(QtCore.QObject):
 
         for body in self.bodies:
             try:
-                new_sketch = _copy_sketch_into_body(doc, self.sketch, body)
+                link_obj = _link_sketch_into_body(doc, self.sketch, body)
                 doc.recompute()
-                self.copies[body.Name] = new_sketch
+                self.copies[body.Name] = link_obj
             except Exception as e:
                 QtGui.QMessageBox.warning(
                     None, "Assembly Cut",
-                    "Error copying sketch into " + body.Label + ":\n" + str(e)
+                    "Error linking sketch into " + body.Label + ":\n" + str(e)
                 )
                 return
 
