@@ -189,7 +189,7 @@ def _find_intersecting_bodies(doc, sketch, bodies):
 
 def _link_sketch_into_body(doc, src_sketch, target_body):
     link_name = src_sketch.Label + "_Link"
-    link_obj = doc.addObject("Part::Link", link_name)
+    link_obj = doc.addObject("App::Link", link_name)
     link_obj.LinkedObject = src_sketch
     link_obj.Placement = src_sketch.Placement.copy()
     target_body.addObject(link_obj)
@@ -203,7 +203,7 @@ class _CutProcessor(QtCore.QObject):
         self.sketch = sketch
         self.bodies = list(bodies)
         self.current_idx = 0
-        self.copies = {}
+        self.links = {}
         self.waiting_for_dialog = False
         self.timer = QtCore.QTimer()
         self.timer.setInterval(200)
@@ -218,7 +218,7 @@ class _CutProcessor(QtCore.QObject):
             try:
                 link_obj = _link_sketch_into_body(doc, self.sketch, body)
                 doc.recompute()
-                self.copies[body.Name] = link_obj
+                self.links[body.Name] = link_obj
             except Exception as e:
                 QtGui.QMessageBox.warning(
                     None, "Assembly Cut",
@@ -237,9 +237,9 @@ class _CutProcessor(QtCore.QObject):
             return
 
         body = self.bodies[self.current_idx]
-        copy_sketch = self.copies.get(body.Name)
+        link_obj = self.links.get(body.Name)
 
-        if copy_sketch is None:
+        if link_obj is None:
             self.current_idx += 1
             self._process_next()
             return
@@ -253,14 +253,12 @@ class _CutProcessor(QtCore.QObject):
         if doc:
             doc.recompute()
 
-        Gui.Selection.clearSelection()
-        Gui.Selection.addSelection(
-            FreeCAD.ActiveDocument.Name,
-            copy_sketch.Name
-        )
+        pocket = body.newObject("PartDesign::Pocket", "Pocket")
+        pocket.Profile = link_obj
+        pocket.Length = 10.0
+        doc.recompute()
 
         self.waiting_for_dialog = True
-        Gui.runCommand("PartDesign_Pocket")
         self.timer.start()
 
     def _on_tick(self):
