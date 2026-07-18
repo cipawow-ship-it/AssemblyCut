@@ -187,14 +187,18 @@ def _find_intersecting_bodies(doc, sketch, bodies):
     return result
 
 
-def _link_sketch_into_body(doc, src_sketch, target_body):
-    link_name = src_sketch.Label + "_Link"
-    link_obj = doc.addObject("App::Link", link_name)
-    link_obj.LinkedObject = src_sketch
-    link_obj.Placement = src_sketch.Placement.copy()
-    target_body.addObject(link_obj)
+def _copy_sketch_into_body(doc, src_sketch, target_body):
+    new_sketch = target_body.newObject("Sketcher::SketchObject", src_sketch.Label + "_Copy")
+
+    geo_list = []
+    for geo in src_sketch.Geometry:
+        copied = geo.copy()
+        geo_list.append(copied)
+
+    new_sketch.addGeometry(geo_list, False)
+    new_sketch.Placement = src_sketch.Placement.copy()
     doc.recompute()
-    return link_obj
+    return new_sketch
 
 
 class _CutProcessor(QtCore.QObject):
@@ -203,7 +207,7 @@ class _CutProcessor(QtCore.QObject):
         self.sketch = sketch
         self.bodies = list(bodies)
         self.current_idx = 0
-        self.links = {}
+        self.copies = {}
         self.waiting_for_dialog = False
         self.timer = QtCore.QTimer()
         self.timer.setInterval(200)
@@ -216,13 +220,13 @@ class _CutProcessor(QtCore.QObject):
 
         for body in self.bodies:
             try:
-                link_obj = _link_sketch_into_body(doc, self.sketch, body)
+                new_sketch = _copy_sketch_into_body(doc, self.sketch, body)
                 doc.recompute()
-                self.links[body.Name] = link_obj
+                self.copies[body.Name] = new_sketch
             except Exception as e:
                 QtGui.QMessageBox.warning(
                     None, "Assembly Cut",
-                    "Error linking sketch into " + body.Label + ":\n" + str(e)
+                    "Error copying sketch into " + body.Label + ":\n" + str(e)
                 )
                 return
 
@@ -237,9 +241,9 @@ class _CutProcessor(QtCore.QObject):
             return
 
         body = self.bodies[self.current_idx]
-        link_obj = self.links.get(body.Name)
+        copy_sketch = self.copies.get(body.Name)
 
-        if link_obj is None:
+        if copy_sketch is None:
             self.current_idx += 1
             self._process_next()
             return
@@ -253,12 +257,14 @@ class _CutProcessor(QtCore.QObject):
         if doc:
             doc.recompute()
 
-        pocket = body.newObject("PartDesign::Pocket", "Pocket")
-        pocket.Profile = link_obj
-        pocket.Length = 10.0
-        doc.recompute()
+        Gui.Selection.clearSelection()
+        Gui.Selection.addSelection(
+            FreeCAD.ActiveDocument.Name,
+            copy_sketch.Name
+        )
 
         self.waiting_for_dialog = True
+        Gui.runCommand("PartDesign_Pocket")
         self.timer.start()
 
     def _on_tick(self):
