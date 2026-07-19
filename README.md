@@ -9,6 +9,14 @@ Cut multiple **PartDesign::Body** objects in an assembly with a single sketch.
 - **Per-body control**: Each body opens its own FreeCAD Pocket dialog
 - **Full parameters**: Set depth, taper, direction, through-all for each body independently
 - **PartDesign native**: Works entirely within the PartDesign workbench
+- **Dual mode**: Choose between independent sketch copies or binders (linked to original sketch)
+- **Hidden profiles**: Created sketches/binders are automatically hidden after creation
+- **Multilingual**: Interface adapts to FreeCAD language setting (Italian, English, and more)
+
+## Profile Modes
+
+- **Independent sketches**: A full copy of the sketch geometry is created inside each body. Each copy is independent — editing the original sketch does not affect existing cuts.
+- **Binder**: A SubShapeBinder referencing the original sketch is created inside each body. Changes to the original sketch propagate to all bound bodies.
 
 ## Installation
 
@@ -39,6 +47,7 @@ Cut multiple **PartDesign::Body** objects in an assembly with a single sketch.
    - Bodies hit by the sketch are **pre-selected** and listed first
    - Use **arrows** next to each body to reorder
    - Check/uncheck bodies as needed
+   - Choose **mode**: Independent sketches or Binder
 6. Press **Cut Bodies**
 7. A **FreeCAD Pocket dialog** opens for each selected body
    - Set depth, taper, direction, etc.
